@@ -1,0 +1,28 @@
+version: '3'
+services:
+  #MOSS Mysql数据库初使化
+  moss-db-init:
+    image: mysql:5.7 #指定容器运行的镜像
+    command: /init-db.sh #覆盖容器启动的默认命令
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    volumes:
+      - ./moss/mysql:/sql
+      - ./init-db.sh:/init-db.sh #将主机的数据卷或者文件挂载到容器里
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 #添加环境变量。您可以使用数组或字典、任何布尔值，布尔值需要用引号引起来，以确保 YML 解析器不会将其转换为 True 或 False。
+
+  #Moss管理中心
+  moss:
+    image: w304807481/moss-web:latest #指定容器运行的镜像
+    container_name: moss #指定自定义容器名称，而不是生成的默认名称
+    restart: always #容器总是重新启动
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    ports:
+      - 8086:8086 #本机映射的端口：容器端口
+    env_file: .env #从文件添加环境变量，可以是单个值或列表的多个值
+    environment:
+      TZ: Asia/Shanghai #添加环境变量。您可以使用数组或字典、任何布尔值，布尔值需要用引号引起来，以确保 YML 解析器不会将其转换为 True 或 False。
+    depends_on:
+      - moss-db-init #设置依赖关系

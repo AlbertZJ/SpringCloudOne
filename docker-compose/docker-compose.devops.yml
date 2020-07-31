@@ -1,0 +1,101 @@
+version: '3'
+services:
+  zipkin-server:
+    image: openzipkin/zipkin #指定容器运行的镜像
+    container_name: sc-zipkin-server #指定自定义容器名称，而不是生成的默认名称
+    restart: always #容器总是重新启动
+    volumes:
+      - ../data/zipkin-server/logs:/var/logs #将主机的数据卷或者文件挂载到容器里
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    ports:
+      - 9411:9411 #本机映射的端口：容器端口
+    environment:
+      - RABBIT_ADDRESSES=rabbitmq:5672
+      - RABBIT_MQ_PORT=5672
+      - RABBIT_PASSWORD=guest
+      - RABBIT_USER=guest
+      - STORAGE_TYPE=elasticsearch
+      - ES_HOSTS=http://elasticsearch:9200 #添加环境变量。您可以使用数组或字典、任何布尔值，布尔值需要用引号引起来，以确保 YML 解析器不会将其转换为 True 或 False。
+    depends_on:
+      - rabbitmq #设置依赖关系
+
+  elasticsearch:
+    image: elasticsearch:5.6-alpine #指定容器运行的镜像
+    container_name: sc-elasticsearch #指定自定义容器名称，而不是生成的默认名称
+    restart: always #容器总是重新启动
+    environment:
+      - cluster.name=elasticsearch
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - node.name=elasticsearch_node_1 #添加环境变量。您可以使用数组或字典、任何布尔值，布尔值需要用引号引起来，以确保 YML 解析器不会将其转换为 True 或 False。
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ../data/elasticsearch/data:/usr/share/elasticsearch/data
+      - ../data/elasticsearch/logs:/usr/share/elasticsearch/logs
+      - ./devops/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml #将主机的数据卷或者文件挂载到容器里
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    ports:
+      - 9200:9200
+      - 9300:9300 #本机映射的端口：容器端口
+
+  skywalking-oap:
+    image: wutang/skywalking-oap:6.1.0 #指定容器运行的镜像
+    container_name: skywalking-oap #指定自定义容器名称，而不是生成的默认名称
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    depends_on:
+      - elasticsearch #设置依赖关系
+    links:
+      - elasticsearch
+    restart: always #容器总是重新启动
+    ports:
+      - 11800:11800
+      - 12800:12800 #本机映射的端口：容器端口
+    volumes:
+      - ./devops/skywalking/config:/apache-skywalking-apm-bin/config:ro #将主机的数据卷或者文件挂载到容器里
+
+  skywalking-ui:
+    image: wutang/skywalking-ui:6.1.0 #指定容器运行的镜像
+    container_name: skywalking-ui #指定自定义容器名称，而不是生成的默认名称
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    depends_on:
+      - skywalking-oap #设置依赖关系
+    links:
+      - skywalking-oap
+    restart: always #容器总是重新启动
+    ports:
+      - 8080:8080 #本机映射的端口：容器端口
+    environment:
+      collector.ribbon.listOfServers: skywalking-oap:12800 #添加环境变量。您可以使用数组或字典、任何布尔值，布尔值需要用引号引起来，以确保 YML 解析器不会将其转换为 True 或 False。
+
+  kibana:
+    image: kibana:5.6.14 #指定容器运行的镜像
+    container_name: sc-kibana #指定自定义容器名称，而不是生成的默认名称
+    restart: always #容器总是重新启动
+    volumes:
+      - ../data/kibana/logs:/var/logs/kibana
+      - ./devops/kibana.yml:/etc/kibana/kibana.yml #将主机的数据卷或者文件挂载到容器里
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    ports:
+      - 5601:5601 #本机映射的端口：容器端口
+    depends_on:
+      - elasticsearch #设置依赖关系
+
+  grafana:
+    image: grafana/grafana #指定容器运行的镜像
+    container_name: sc-grafana #指定自定义容器名称，而不是生成的默认名称
+    restart: always #容器总是重新启动
+    volumes:
+      - ../data/grafana/logs:/var/logs/grafana #将主机的数据卷或者文件挂载到容器里
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    ports:
+      - 3000:3000 #本机映射的端口：容器端口

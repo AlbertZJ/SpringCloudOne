@@ -1,0 +1,46 @@
+#spring:
+#  profiles:
+#    active: dev
+spring:
+  rabbitmq:
+    host: ${RABBIT_MQ_HOST:localhost}
+    port: ${RABBIT_MQ_PORT:5672}
+    username: ${RABBIT_MQ_USERNAME:guest}
+    password: ${RABBIT_MQ_PASSWORD:guest}
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:123456}
+  #spring boot admin的登陆账号和密码配置
+  security:
+    user:
+      name: admin
+      password: 123456
+  #通过rabbit MQ将日志发给zipkin
+  zipkin:
+    base-url: http://localhost:9411
+    discovery-client-enabled: false
+    enabled: true
+    sender:
+      type: web
+  sleuth:
+    web:
+      client:
+        enabled: true
+    sampler:
+      probability: 1.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+#日志相关配置
+logging:
+  level:
+    org.springframework.security: DEBUG
+  path: logs/
+  file:
+    max-size: 1GB
+
+

@@ -1,0 +1,24 @@
+version: '3'
+services:
+  #监控管理台服务
+  monitor-admin:
+    image: cike/admin:latest #指定容器运行的镜像
+    container_name: sc-monitor-admin #指定自定义容器名称，而不是生成的默认名称
+    restart: always #容器总是重新启动
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    ports:
+      - 8022:8022 #本机映射的端口：容器端口
+    env_file: .env #从文件添加环境变量，可以是单个值或列表的多个值
+    environment:
+      TZ: Asia/Shanghai #添加环境变量。您可以使用数组或字典、任何布尔值，布尔值需要用引号引起来，以确保 YML 解析器不会将其转换为 True 或 False。
+
+  sentinel-dashboard:
+    image: cike/sentinel-dashboard-docker:latest #指定容器运行的镜像
+    container_name: sc-sentinel-dashboard #指定自定义容器名称，而不是生成的默认名称
+    restart: always #容器总是重新启动
+    networks:
+      - sc-net #配置容器连接的网络，引用顶级networks下的条目
+    ports:
+      - 8021:8021 #本机映射的端口：容器端口
+    env_file: .env #从文件添加环境变量，可以是单个值或列表的多个值

@@ -1,0 +1,30 @@
+server:
+  port: 9002
+spring:
+  application:
+    name: producer-jpa
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${REGISTER_HOST:localhost}:${REGISTER_PORT:8848}
+        namespace: spring-cloud-scaffolding
+      config:
+        server-addr: ${REGISTER_HOST:localhost}:${REGISTER_PORT:8848}
+        namespace: spring-cloud-scaffolding
+        file-extension: yaml
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD_HOST:localhost}:${SENTINEL_DASHBOARD_PORT:8080}
+        port: 8719
+#      datasource:
+#        ds1:
+#          nacos:
+#            server-addr: localhost:8848
+#            namespace: spring-cloud-scaffolding
+#            dataId: ${spring.application.name}-sentinel
+#            groupId: DEFAULT_GROUP
+#            data-type: json
+#            rule-type: flow
+    bus:
+      trace:
+        enabled: true
